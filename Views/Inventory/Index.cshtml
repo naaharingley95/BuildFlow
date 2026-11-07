@@ -1,0 +1,159 @@
+@model List<BuildFlow.Models.SiteInventory>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Site Inventory"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-warehouse" style="color:var(--accent)"></i> Site Inventory</h1>
+    <div class="flex-gap">
+        <a asp-action="LowStock" class="btn btn-warning"><i class="fa fa-triangle-exclamation"></i> Low Stock Alerts</a>
+        @if (ViewBag.SiteId != null)
+        {
+            <button class="btn btn-primary" onclick="document.getElementById('adjust-modal').style.display='block'">
+                <i class="fa fa-sliders"></i> Stock Adjustment
+            </button>
+        }
+    </div>
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;align-items:flex-end;">
+        <div>
+            <label class="form-label">Select Construction Site *</label>
+            <select name="siteId" class="form-control" onchange="this.form.submit()">
+                <option value="">-- Choose a Site --</option>
+                @foreach (var s in ViewBag.Sites as List<ConstructionSite> ?? new())
+                {
+                    <option value="@s.Id" selected="@(ViewBag.SiteId?.ToString() == s.Id.ToString())">@s.SiteName</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-arrow-right"></i> Load</button>
+    </form>
+</div>
+
+@if (ViewBag.SiteId == null)
+{
+    <div class="card" style="text-align:center;padding:48px 24px;">
+        <div style="font-size:42px;margin-bottom:12px;">🏗️</div>
+        <h3>Select a Site to View Inventory</h3>
+        <p class="text-muted">Choose an active construction project from the dropdown above to manage stock levels, view transactions, and record adjustments.</p>
+    </div>
+}
+else
+{
+    var lowStockCount = Model.Count(x => x.IsLowStock);
+    <div class="kpi-grid mb-6">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(108,99,255,0.15);color:#6c63ff;">📦</div>
+            <div class="kpi-value">@Model.Count</div>
+            <div class="kpi-label">Tracked Materials</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(255,107,107,0.15);color:#ff6b6b;">⚠️</div>
+            <div class="kpi-value" style="color:@(lowStockCount > 0 ? "#ff6b6b" : "inherit")">@lowStockCount</div>
+            <div class="kpi-label">Low Stock Items</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(78,205,196,0.15);color:#4ecdc4;">🔄</div>
+            <div class="kpi-value">@Model.Sum(x => x.ReceivedQuantity).ToString("N0")</div>
+            <div class="kpi-label">Total Units Received</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background:rgba(255,217,61,0.15);color:#ffd93d;">⚡</div>
+            <div class="kpi-value">@Model.Sum(x => x.ConsumedQuantity).ToString("N0")</div>
+            <div class="kpi-label">Total Units Consumed</div>
+        </div>
+    </div>
+
+    <!-- Stock Adjustment Modal -->
+    <div id="adjust-modal" style="display:none;" class="card mb-6">
+        <div class="card-header">
+            <span class="card-title" style="color:var(--accent4);"><i class="fa fa-sliders"></i> Record Stock Adjustment</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('adjust-modal').style.display='none'"><i class="fa fa-xmark"></i> Close</button>
+        </div>
+        <form asp-action="Adjust" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="siteId" value="@ViewBag.SiteId" />
+            <div class="grid-3 mb-4">
+                <div>
+                    <label class="form-label">Material *</label>
+                    <select name="materialId" class="form-control" required>
+                        <option value="">Select Material...</option>
+                        @foreach (var inv in Model)
+                        {
+                            <option value="@inv.MaterialId">@inv.Material?.Name (@inv.Material?.Unit)</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Adjustment Quantity (+ / -) *</label>
+                    <input type="number" step="0.01" name="quantity" class="form-control" placeholder="+10 or -5" required />
+                </div>
+                <div>
+                    <label class="form-label">Reason *</label>
+                    <input type="text" name="reason" class="form-control" placeholder="Cycle count, breakage, return..." required />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Apply Adjustment</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Category</th>
+                        <th>Unit</th>
+                        <th>Opening</th>
+                        <th>Received</th>
+                        <th>Consumed</th>
+                        <th>Adjusted</th>
+                        <th>Available</th>
+                        <th>Min Stock</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var inv in Model)
+                {
+                    <tr>
+                        <td class="fw-600">@inv.Material?.Name</td>
+                        <td class="text-muted text-sm">@inv.Material?.Category?.Name</td>
+                        <td class="text-muted">@inv.Material?.Unit</td>
+                        <td>@inv.OpeningStock.ToString("N2")</td>
+                        <td style="color:#4ecdc4;">@inv.ReceivedQuantity.ToString("N2")</td>
+                        <td style="color:#ffd93d;">@inv.ConsumedQuantity.ToString("N2")</td>
+                        <td>@(inv.AdjustedQuantity >= 0 ? "+" : "")@inv.AdjustedQuantity.ToString("N2")</td>
+                        <td style="font-weight:700;font-size:15px;color:@(inv.IsLowStock ? "#ff6b6b" : "var(--accent2)")">
+                            @inv.AvailableStock.ToString("N2")
+                        </td>
+                        <td class="text-muted">@inv.MinimumStockLevel.ToString("N2")</td>
+                        <td>
+                            @if (inv.IsLowStock)
+                            {
+                                <span class="badge badge-red"><i class="fa fa-triangle-exclamation"></i> Low Stock</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-green"><i class="fa fa-circle-check"></i> Healthy</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Transactions" asp-route-siteInventoryId="@inv.Id" class="btn btn-secondary btn-sm" title="View Audit Ledger">
+                                <i class="fa fa-clock-rotate-left"></i> Ledger
+                            </a>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text-muted);">No inventory records for this site</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

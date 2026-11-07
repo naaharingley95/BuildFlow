@@ -1,0 +1,32 @@
+## .NET build outputs
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Publish / deploy folders (don't commit compiled binaries)
+deploy_out/
+publish_output/
+buildflow_deploy.zip
+
+## SQLite database files (don't commit data)
+*.db
+*.db-shm
+*.db-wal
+
+## Secrets / environment overrides
+appsettings.Development.json
+appsettings.Local.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Rider/VS Code
+.idea/
+.vscode/
+
+## Railway / Azure install scripts
+install_azure_cli.bat
+

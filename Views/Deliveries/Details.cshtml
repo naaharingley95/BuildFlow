@@ -1,0 +1,141 @@
+@model BuildFlow.Models.Delivery
+@using BuildFlow.Models
+@{ ViewData["Title"] = $"Delivery {Model.DeliveryNumber}"; }
+
+<div class="page-header">
+    <div>
+        <div class="flex-gap mb-4">
+            <a asp-action="Index" class="btn btn-secondary btn-sm"><i class="fa fa-arrow-left"></i> Back</a>
+            <partial name="_StatusBadge" model="@Model.Status.ToString()" />
+            @if (Model.InventoryPosted)
+            {
+                <span class="badge badge-green"><i class="fa fa-warehouse"></i> Inventory Updated</span>
+            }
+        </div>
+        <h1>@Model.DeliveryNumber</h1>
+        <p class="text-muted">PO: <a asp-controller="PurchaseOrders" asp-action="Details" asp-route-id="@Model.PurchaseOrderId" style="color:var(--accent);text-decoration:none;">@Model.PurchaseOrder?.OrderNumber</a> &bull; Created @Model.CreatedAtUtc.ToString("dd MMM yyyy")</p>
+    </div>
+    <div class="flex-gap">
+        @if (!Model.InventoryPosted && Model.Status != DeliveryStatus.Cancelled && Model.Status != DeliveryStatus.FullyReceived)
+        {
+            <button class="btn btn-danger btn-sm" onclick="document.getElementById('cancel-section').style.display='block'">
+                <i class="fa fa-xmark"></i> Cancel Delivery
+            </button>
+        }
+    </div>
+</div>
+
+<div id="cancel-section" style="display:none" class="card mb-6">
+    <div class="card-title mb-4" style="color:#ff6b6b;">Cancel Delivery</div>
+    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post">
+        @Html.AntiForgeryToken()
+        <div class="form-group">
+            <label class="form-label">Cancellation Reason *</label>
+            <input type="text" name="reason" class="form-control" required placeholder="Specify reason..." />
+        </div>
+        <div class="flex-gap">
+            <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('cancel-section').style.display='none'">Dismiss</button>
+        </div>
+    </form>
+</div>
+
+<div class="grid-2 mb-6">
+    <div class="card">
+        <div class="card-title mb-4">Shipment Details</div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="label">Site</div><div class="value">@Model.Site?.SiteName</div></div>
+            <div class="detail-item"><div class="label">Supplier</div><div class="value">@Model.Supplier?.CompanyName</div></div>
+            <div class="detail-item"><div class="label">Expected Date</div><div class="value">@Model.ExpectedArrivalDate.ToString("dd MMM yyyy")</div></div>
+            <div class="detail-item"><div class="label">Actual Date</div><div class="value">@(Model.ActualArrivalDate.HasValue ? Model.ActualArrivalDate.Value.ToString("dd MMM yyyy") : "Pending")</div></div>
+            <div class="detail-item"><div class="label">Vehicle #</div><div class="value">@(string.IsNullOrEmpty(Model.VehicleNumber) ? "—" : Model.VehicleNumber)</div></div>
+            <div class="detail-item"><div class="label">Inventory Status</div><div class="value">@(Model.InventoryPosted ? "Posted to Stock" : "Not Posted")</div></div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Remarks))
+        {
+            <hr />
+            <div class="detail-item"><div class="label">Remarks</div><div style="margin-top:4px;color:var(--text-muted)">@Model.Remarks</div></div>
+        }
+    </div>
+
+    @if (!Model.InventoryPosted && Model.Status != DeliveryStatus.Cancelled)
+    {
+        <div class="card">
+            <div class="card-title mb-4" style="color:var(--accent2);"><i class="fa fa-clipboard-check"></i> Goods Receipt Inspection</div>
+            <p class="text-muted text-sm mb-4">Verify received and damaged/rejected quantities before posting to site inventory.</p>
+
+            <form asp-action="ConfirmReceipt" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="table-wrap mb-4">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Scheduled</th>
+                                <th>Accepted</th>
+                                <th>Rejected</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.Material?.Name</strong>
+                                    <input type="hidden" name="itemIds" value="@item.Id" />
+                                </td>
+                                <td class="text-muted">@item.OrderedQuantity.ToString("N2")</td>
+                                <td style="width:100px;">
+                                    <input type="number" name="receivedQtys" value="@item.OrderedQuantity" min="0" step="0.01" class="form-control" required />
+                                </td>
+                                <td style="width:90px;">
+                                    <input type="number" name="rejectedQtys" value="0" min="0" step="0.01" class="form-control" required />
+                                </td>
+                                <td>
+                                    <input type="text" name="remarksArr" class="form-control" placeholder="Condition..." />
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="submit" class="btn btn-success" onclick="return confirm('Confirm receipt and update site stock?');">
+                    <i class="fa fa-check-circle"></i> Confirm Receipt & Post to Inventory
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<div class="card mb-6">
+    <div class="card-title mb-4">Delivery Items</div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Material</th>
+                    <th>Unit</th>
+                    <th>Scheduled Qty</th>
+                    <th>Accepted Qty</th>
+                    <th>Rejected Qty</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td class="fw-600">@item.Material?.Name</td>
+                    <td class="text-muted">@item.Material?.Unit</td>
+                    <td>@item.OrderedQuantity.ToString("N2")</td>
+                    <td style="color:#4ecdc4;font-weight:600;">@item.ReceivedQuantity.ToString("N2")</td>
+                    <td style="color:#ff6b6b;">@item.RejectedQuantity.ToString("N2")</td>
+                    <td class="text-muted text-sm">@(string.IsNullOrEmpty(item.Remarks) ? "—" : item.Remarks)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

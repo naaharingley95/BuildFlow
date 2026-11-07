@@ -1,0 +1,12 @@
+@model string
+@{
+    var cls = Model switch {
+        "Low"      => "badge-blue",
+        "Normal"   => "badge-green",
+        "High"     => "badge-yellow",
+        "Urgent"   => "badge-red",
+        "Critical" => "badge-red",
+        _          => "badge-gray"
+    };
+}
+<span class="badge @cls">@Model</span>

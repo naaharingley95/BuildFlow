@@ -1,0 +1,76 @@
+@model List<BuildFlow.Models.InventoryTransaction>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Inventory Audit Ledger"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back to Inventory</a>
+        <h1><i class="fa fa-clock-rotate-left" style="color:var(--accent)"></i> Stock Transaction History</h1>
+        <p class="text-muted">Immutable audit trail of all receipts, consumptions, and adjustments for this material.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date & Time (UTC)</th>
+                    <th>Type</th>
+                    <th>Quantity Change</th>
+                    <th>Reference</th>
+                    <th>Recorded By</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var tx in Model)
+            {
+                var isPositive = tx.Quantity > 0;
+                <tr>
+                    <td class="text-sm">@tx.TransactionDateUtc.ToString("dd MMM yyyy HH:mm")</td>
+                    <td>
+                        @switch (tx.TransactionType)
+                        {
+                            case TransactionType.Received:
+                                <span class="badge badge-green"><i class="fa fa-arrow-down"></i> Received</span>
+                                break;
+                            case TransactionType.Consumed:
+                                <span class="badge badge-yellow"><i class="fa fa-arrow-up"></i> Consumed</span>
+                                break;
+                            case TransactionType.Damaged:
+                                <span class="badge badge-red"><i class="fa fa-triangle-exclamation"></i> Damaged</span>
+                                break;
+                            case TransactionType.Adjustment:
+                                <span class="badge badge-blue"><i class="fa fa-sliders"></i> Adjustment</span>
+                                break;
+                            case TransactionType.OpeningStock:
+                                <span class="badge badge-gray"><i class="fa fa-flag"></i> Opening Stock</span>
+                                break;
+                            default:
+                                <span class="badge badge-gray">@tx.TransactionType</span>
+                                break;
+                        }
+                    </td>
+                    <td style="font-weight:700;color:@(isPositive ? "#4ecdc4" : "#ff6b6b")">
+                        @(isPositive ? "+" : "")@tx.Quantity.ToString("N2")
+                    </td>
+                    <td class="text-sm" style="color:var(--accent);">
+                        @(string.IsNullOrEmpty(tx.Reference) ? "—" : tx.Reference)
+                    </td>
+                    <td class="text-muted text-sm">@tx.PerformedBy?.FullName</td>
+                    <td class="text-muted text-sm">@(string.IsNullOrEmpty(tx.Remarks) ? "—" : tx.Remarks)</td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">
+                        No transaction logs recorded yet.
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

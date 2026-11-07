@@ -1,0 +1,24 @@
+@model string
+@{
+    var cls = Model switch {
+        "Draft"              => "badge-gray",
+        "Submitted"          => "badge-blue",
+        "Approved"           => "badge-green",
+        "Rejected"           => "badge-red",
+        "Ordered"            => "badge-blue",
+        "Issued"             => "badge-blue",
+        "PartiallyReceived"  => "badge-yellow",
+        "FullyReceived"      => "badge-green",
+        "Cancelled"          => "badge-red",
+        "Scheduled"          => "badge-blue",
+        "Dispatched"         => "badge-yellow",
+        "Active"             => "badge-green",
+        "Inactive"           => "badge-gray",
+        "Suspended"          => "badge-orange",
+        "Planning"           => "badge-blue",
+        "OnHold"             => "badge-orange",
+        "Completed"          => "badge-green",
+        _                    => "badge-gray"
+    };
+}
+<span class="badge @cls">@Model</span>

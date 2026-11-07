@@ -1,0 +1,84 @@
+@model List<BuildFlow.Services.SiteInventoryReportRow>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Inventory Status Report"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> All Reports</a>
+        <h1><i class="fa fa-warehouse" style="color:var(--accent)"></i> Inventory Status Report</h1>
+    </div>
+    <div class="flex-gap">
+        <a asp-action="ExportInventoryCsv" asp-route-siteId="@ViewBag.SiteId" class="btn btn-secondary"><i class="fa fa-file-csv"></i> Export CSV</a>
+        <button onclick="window.print()" class="btn btn-secondary"><i class="fa fa-print"></i> Print Report</button>
+    </div>
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;align-items:flex-end;">
+        <div>
+            <label class="form-label">Filter by Site</label>
+            <select name="siteId" class="form-control" onchange="this.form.submit()">
+                <option value="">All Construction Sites</option>
+                @foreach (var s in ViewBag.Sites as List<ConstructionSite> ?? new())
+                {
+                    <option value="@s.Id" selected="@(ViewBag.SiteId?.ToString() == s.Id.ToString())">@s.SiteName</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-filter"></i> Apply</button>
+        <a asp-action="Inventory" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Site</th>
+                    <th>Category</th>
+                    <th>Material</th>
+                    <th>Unit</th>
+                    <th>Received</th>
+                    <th>Consumed</th>
+                    <th>Adjusted</th>
+                    <th>Available Stock</th>
+                    <th>Min Required</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model)
+            {
+                <tr>
+                    <td class="fw-600">@row.SiteName</td>
+                    <td class="text-muted text-sm">@row.Category</td>
+                    <td>@row.MaterialName</td>
+                    <td class="text-muted">@row.Unit</td>
+                    <td style="color:#4ecdc4;">@row.Received.ToString("N2")</td>
+                    <td style="color:#ffd93d;">@row.Consumed.ToString("N2")</td>
+                    <td>@(row.Adjusted >= 0 ? "+" : "")@row.Adjusted.ToString("N2")</td>
+                    <td style="font-weight:700;color:@(row.IsLowStock ? "#ff6b6b" : "var(--accent2)")">
+                        @row.Available.ToString("N2")
+                    </td>
+                    <td class="text-muted">@row.MinStock.ToString("N2")</td>
+                    <td>
+                        @if (row.IsLowStock)
+                        {
+                            <span class="badge badge-red">Low Stock</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-green">Healthy</span>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted);">No inventory records found</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

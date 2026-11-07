@@ -1,0 +1,100 @@
+@model List<BuildFlow.Models.Delivery>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Deliveries"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-truck" style="color:var(--accent)"></i> Deliveries</h1>
+    <a asp-controller="PurchaseOrders" asp-action="Index" class="btn btn-primary">
+        <i class="fa fa-file-invoice"></i> Select PO to Deliver
+    </a>
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label class="form-label">Site</label>
+            <select name="siteId" class="form-control">
+                <option value="">All Sites</option>
+                @foreach (var s in ViewBag.Sites as List<ConstructionSite> ?? new())
+                {
+                    <option value="@s.Id" selected="@(ViewBag.SiteId?.ToString() == s.Id.ToString())">@s.SiteName</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control">
+                <option value="">All Statuses</option>
+                @foreach (var s in Enum.GetValues<DeliveryStatus>())
+                {
+                    <option value="@s" selected="@(ViewBag.Status?.ToString() == s.ToString())">@s</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-filter"></i> Filter</button>
+        <a asp-action="Index" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Delivery #</th>
+                    <th>PO Number</th>
+                    <th>Supplier</th>
+                    <th>Site</th>
+                    <th>Expected Arrival</th>
+                    <th>Vehicle #</th>
+                    <th>Status</th>
+                    <th>Inventory</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var d in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@d.Id" style="color:var(--accent);text-decoration:none;font-weight:600;">
+                            @d.DeliveryNumber
+                        </a>
+                    </td>
+                    <td>
+                        <a asp-controller="PurchaseOrders" asp-action="Details" asp-route-id="@d.PurchaseOrderId" style="color:var(--text-muted);text-decoration:none;">
+                            @d.PurchaseOrder?.OrderNumber
+                        </a>
+                    </td>
+                    <td>@d.Supplier?.CompanyName</td>
+                    <td class="text-muted">@d.Site?.SiteName</td>
+                    <td class="text-sm">@d.ExpectedArrivalDate.ToString("dd MMM yyyy")</td>
+                    <td class="text-muted text-sm">@(string.IsNullOrEmpty(d.VehicleNumber) ? "—" : d.VehicleNumber)</td>
+                    <td><partial name="_StatusBadge" model="@d.Status.ToString()" /></td>
+                    <td>
+                        @if (d.InventoryPosted)
+                        {
+                            <span class="badge badge-green"><i class="fa fa-check"></i> Posted</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-gray">Pending</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@d.Id" class="btn btn-secondary btn-sm">View</a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted);">
+                        No deliveries found
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,139 @@
+@using BuildFlow.Services
+@model BuildFlow.Services.DashboardSummary
+@{ ViewData["Title"] = "Dashboard"; }
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(108,99,255,0.15);color:#6c63ff;">🏗️</div>
+        <div class="kpi-value">@Model.TotalSites</div>
+        <div class="kpi-label">Active Sites</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(78,205,196,0.15);color:#4ecdc4;">📦</div>
+        <div class="kpi-value">@Model.TotalMaterials</div>
+        <div class="kpi-label">Materials</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(255,217,61,0.15);color:#ffd93d;">🏢</div>
+        <div class="kpi-value">@Model.ActiveSuppliers</div>
+        <div class="kpi-label">Active Suppliers</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(255,107,107,0.15);color:#ff6b6b;">📋</div>
+        <div class="kpi-value">@Model.PendingRequests</div>
+        <div class="kpi-label">Pending Requests</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(108,99,255,0.15);color:#6c63ff;">📄</div>
+        <div class="kpi-value">@Model.ActivePurchaseOrders</div>
+        <div class="kpi-label">Active POs</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(78,205,196,0.15);color:#4ecdc4;">🚚</div>
+        <div class="kpi-value">@Model.PendingDeliveries</div>
+        <div class="kpi-label">Pending Deliveries</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(255,107,107,0.15);color:#ff6b6b;">⚠️</div>
+        <div class="kpi-value">@Model.LowStockItems</div>
+        <div class="kpi-label">Low Stock Alerts</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(255,217,61,0.15);color:#ffd93d;">💰</div>
+        <div class="kpi-value" style="font-size:18px;">₹@Model.TotalProcurementExpenditure.ToString("N0")</div>
+        <div class="kpi-label">Total Procurement</div>
+    </div>
+</div>
+
+<div class="grid-2 mb-6">
+    <!-- Recent Requests -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Recent Material Requests</span>
+            <a asp-controller="MaterialRequests" asp-action="Index" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Number</th><th>Site</th><th>Status</th><th>Priority</th><th>Date</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var r in Model.RecentRequests)
+                {
+                    <tr>
+                        <td><a asp-controller="MaterialRequests" asp-action="Details" asp-route-id="@r.Id" style="color:var(--accent);text-decoration:none;">@r.RequestNumber</a></td>
+                        <td class="text-muted">@r.SiteName</td>
+                        <td><partial name="_StatusBadge" model="@r.Status.ToString()" /></td>
+                        <td><partial name="_PriorityBadge" model="@r.Priority.ToString()" /></td>
+                        <td class="text-muted text-sm">@r.RequestDate.ToString("dd MMM")</td>
+                    </tr>
+                }
+                @if (!Model.RecentRequests.Any())
+                {
+                    <tr><td colspan="5" class="text-muted text-sm" style="text-align:center;padding:20px;">No requests yet</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Upcoming Deliveries -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Upcoming Deliveries</span>
+            <a asp-controller="Deliveries" asp-action="Index" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Number</th><th>Supplier</th><th>Site</th><th>Expected</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var d in Model.UpcomingDeliveries)
+                {
+                    <tr>
+                        <td><a asp-controller="Deliveries" asp-action="Details" asp-route-id="@d.Id" style="color:var(--accent);text-decoration:none;">@d.DeliveryNumber</a></td>
+                        <td>@d.SupplierName</td>
+                        <td class="text-muted">@d.SiteName</td>
+                        <td class="text-sm">@d.ExpectedArrival.ToString("dd MMM")</td>
+                        <td><partial name="_StatusBadge" model="@d.Status.ToString()" /></td>
+                    </tr>
+                }
+                @if (!Model.UpcomingDeliveries.Any())
+                {
+                    <tr><td colspan="5" class="text-muted text-sm" style="text-align:center;padding:20px;">No deliveries scheduled</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (Model.LowStockAlerts.Any())
+{
+    <div class="card mb-6">
+        <div class="card-header">
+            <span class="card-title" style="color:#ff6b6b;"><i class="fa fa-triangle-exclamation"></i> Low Stock Alerts</span>
+            <a asp-controller="Inventory" asp-action="LowStock" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Site</th><th>Material</th><th>Available</th><th>Minimum</th><th>Unit</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var a in Model.LowStockAlerts)
+                {
+                    <tr>
+                        <td>@a.SiteName</td>
+                        <td>@a.MaterialName</td>
+                        <td style="color:#ff6b6b;font-weight:600;">@a.Available.ToString("N2")</td>
+                        <td class="text-muted">@a.Minimum.ToString("N2")</td>
+                        <td class="text-muted">@a.Unit</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

@@ -1,0 +1,135 @@
+@model BuildFlow.Models.PurchaseOrder
+@using BuildFlow.Models
+@{ ViewData["Title"] = $"PO {Model.OrderNumber}"; }
+
+<div class="page-header">
+    <div>
+        <div class="flex-gap mb-4">
+            <a asp-action="Index" class="btn btn-secondary btn-sm"><i class="fa fa-arrow-left"></i> Back</a>
+            <partial name="_StatusBadge" model="@Model.Status.ToString()" />
+        </div>
+        <h1>@Model.OrderNumber</h1>
+        <p class="text-muted">Created @Model.CreatedAtUtc.ToString("dd MMM yyyy") by @Model.CreatedBy?.FullName</p>
+    </div>
+    <div class="flex-gap">
+        @if (Model.Status == PurchaseOrderStatus.Draft)
+        {
+            <form asp-action="Issue" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-success"><i class="fa fa-paper-plane"></i> Issue PO</button>
+            </form>
+        }
+        @if (Model.Status == PurchaseOrderStatus.Issued || Model.Status == PurchaseOrderStatus.PartiallyReceived)
+        {
+            <a asp-controller="Deliveries" asp-action="Create" asp-route-purchaseOrderId="@Model.Id" class="btn btn-primary">
+                <i class="fa fa-truck"></i> Schedule Delivery
+            </a>
+        }
+        @if (Model.Status == PurchaseOrderStatus.Draft || Model.Status == PurchaseOrderStatus.Issued)
+        {
+            <button class="btn btn-danger btn-sm" onclick="document.getElementById('cancel-section').style.display='block'">
+                <i class="fa fa-xmark"></i> Cancel PO
+            </button>
+        }
+    </div>
+</div>
+
+<div id="cancel-section" style="display:none" class="card mb-6">
+    <div class="card-title mb-4" style="color:#ff6b6b;">Cancel Purchase Order</div>
+    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post">
+        @Html.AntiForgeryToken()
+        <div class="form-group">
+            <label class="form-label">Reason *</label>
+            <input type="text" name="reason" class="form-control" required placeholder="Reason for cancellation..." />
+        </div>
+        <div class="flex-gap">
+            <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('cancel-section').style.display='none'">Dismiss</button>
+        </div>
+    </form>
+</div>
+
+<div class="grid-2 mb-6">
+    <div class="card">
+        <div class="card-title mb-4">Order Details</div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="label">Supplier</div><div class="value">@Model.Supplier?.CompanyName</div></div>
+            <div class="detail-item"><div class="label">Site</div><div class="value">@Model.Site?.SiteName</div></div>
+            <div class="detail-item"><div class="label">Order Date</div><div class="value">@Model.OrderDate.ToString("dd MMM yyyy")</div></div>
+            <div class="detail-item"><div class="label">Expected Delivery</div><div class="value">@Model.ExpectedDeliveryDate.ToString("dd MMM yyyy")</div></div>
+            <div class="detail-item"><div class="label">Status</div><div class="value">@Model.Status</div></div>
+            @if (Model.MaterialRequest != null)
+            {
+                <div class="detail-item"><div class="label">Material Request</div><div class="value"><a asp-controller="MaterialRequests" asp-action="Details" asp-route-id="@Model.MaterialRequestId" style="color:var(--accent)">@Model.MaterialRequest.RequestNumber</a></div></div>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <hr/>
+            <div class="detail-item"><div class="label">Notes</div><div style="margin-top:4px;color:var(--text-muted)">@Model.Notes</div></div>
+        }
+    </div>
+
+    <div class="card">
+        <div class="card-title mb-4">Financial Summary</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="flex-between"><span class="text-muted">Subtotal</span><span class="fw-600">₹@Model.SubTotal.ToString("N2")</span></div>
+            <div class="flex-between"><span class="text-muted">Tax</span><span>₹@Model.TaxAmount.ToString("N2")</span></div>
+            <div class="flex-between"><span class="text-muted">Other Charges</span><span>₹@Model.OtherCharges.ToString("N2")</span></div>
+            <hr/>
+            <div class="flex-between"><span class="fw-600" style="font-size:16px;">Total</span><span class="fw-600" style="font-size:18px;color:var(--accent2)">₹@Model.TotalAmount.ToString("N2")</span></div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.CancelReason))
+        {
+            <hr/>
+            <div class="alert alert-danger" style="margin-bottom:0"><strong>Cancel Reason:</strong> @Model.CancelReason</div>
+        }
+    </div>
+</div>
+
+<div class="card mb-6">
+    <div class="card-title mb-4">Order Items</div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Material</th><th>Ordered Qty</th><th>Received Qty</th><th>Outstanding</th><th>Unit Price</th><th>Sub Total</th></tr></thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td class="fw-600">@item.Material?.Name</td>
+                    <td>@item.OrderedQuantity.ToString("N2")</td>
+                    <td style="color:var(--accent2)">@item.ReceivedQuantity.ToString("N2")</td>
+                    <td style="@(item.OutstandingQuantity > 0 ? "color:#ffd93d" : "color:#4ecdc4")">@item.OutstandingQuantity.ToString("N2")</td>
+                    <td class="text-muted">₹@item.UnitPrice.ToString("N2")</td>
+                    <td class="fw-600">₹@item.SubTotal.ToString("N2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.Deliveries.Any())
+{
+    <div class="card">
+        <div class="card-title mb-4">Linked Deliveries</div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Delivery #</th><th>Expected</th><th>Actual</th><th>Status</th><th>Inventory</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var d in Model.Deliveries)
+                {
+                    <tr>
+                        <td><a asp-controller="Deliveries" asp-action="Details" asp-route-id="@d.Id" style="color:var(--accent);text-decoration:none">@d.DeliveryNumber</a></td>
+                        <td class="text-sm">@d.ExpectedArrivalDate.ToString("dd MMM yyyy")</td>
+                        <td class="text-sm">@(d.ActualArrivalDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                        <td><partial name="_StatusBadge" model="@d.Status.ToString()" /></td>
+                        <td><span class="badge @(d.InventoryPosted ? "badge-green" : "badge-gray")">@(d.InventoryPosted ? "Posted" : "Pending")</span></td>
+                        <td><a asp-controller="Deliveries" asp-action="Details" asp-route-id="@d.Id" class="btn btn-secondary btn-sm">View</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

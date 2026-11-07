@@ -1,0 +1,82 @@
+@model List<BuildFlow.Models.Supplier>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Suppliers"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-people-carry-box" style="color:var(--accent)"></i> Suppliers</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("Administrator") || User.IsInRole("Procurement") || User.IsInRole("ProcurementManager"))
+    {
+        <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> Add Supplier</a>
+    }
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label class="form-label">Search</label>
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Company, contact or email..." class="form-control" />
+        </div>
+        <div>
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control">
+                <option value="">All Statuses</option>
+                @foreach (var s in Enum.GetValues<SupplierStatus>())
+                {
+                    <option value="@s" selected="@(ViewBag.Status?.ToString() == s.ToString())">@s</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-filter"></i> Filter</button>
+        <a asp-action="Index" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Contact Person</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Categories Supplied</th>
+                    <th>Payment Terms</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@s.Id" style="color:var(--accent);text-decoration:none;font-weight:600;">
+                            @s.CompanyName
+                        </a>
+                    </td>
+                    <td class="text-sm">@s.ContactPerson</td>
+                    <td class="text-muted text-sm">@s.PhoneNumber</td>
+                    <td class="text-sm"><a href="mailto:@s.Email" style="color:var(--text-muted);text-decoration:none;">@s.Email</a></td>
+                    <td class="text-sm text-muted">@(string.IsNullOrEmpty(s.MaterialCategoriesSupplied) ? "—" : s.MaterialCategoriesSupplied)</td>
+                    <td><span class="badge badge-gray">@s.PaymentTerms</span></td>
+                    <td><partial name="_StatusBadge" model="@s.Status.ToString()" /></td>
+                    <td>
+                        <div class="flex-gap">
+                            <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-secondary btn-sm">Details</a>
+                            @if (User.IsInRole("Admin") || User.IsInRole("Administrator") || User.IsInRole("Procurement") || User.IsInRole("ProcurementManager"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-secondary btn-sm"><i class="fa fa-pen"></i></a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No suppliers found</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

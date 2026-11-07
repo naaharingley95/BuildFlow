@@ -1,0 +1,108 @@
+@model BuildFlow.Services.SupplierDetailsDto
+@using BuildFlow.Models
+@{ ViewData["Title"] = Model.Supplier.CompanyName; }
+
+<div class="page-header">
+    <div>
+        <div class="flex-gap mb-4">
+            <a asp-action="Index" class="btn btn-secondary btn-sm"><i class="fa fa-arrow-left"></i> Back to Suppliers</a>
+            <partial name="_StatusBadge" model="@Model.Supplier.Status.ToString()" />
+        </div>
+        <h1>@Model.Supplier.CompanyName</h1>
+        <p class="text-muted"><i class="fa fa-user"></i> @Model.Supplier.ContactPerson &bull; <i class="fa fa-phone"></i> @Model.Supplier.PhoneNumber &bull; <i class="fa fa-envelope"></i> @Model.Supplier.Email</p>
+    </div>
+    <div class="flex-gap">
+        @if (User.IsInRole("Admin") || User.IsInRole("Administrator") || User.IsInRole("Procurement") || User.IsInRole("ProcurementManager"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Supplier.Id" class="btn btn-secondary"><i class="fa fa-pen"></i> Edit</a>
+            <a asp-controller="PurchaseOrders" asp-action="Create" class="btn btn-primary"><i class="fa fa-file-invoice"></i> Create PO</a>
+        }
+    </div>
+</div>
+
+<div class="kpi-grid mb-6">
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(108,99,255,0.15);color:#6c63ff;">📄</div>
+        <div class="kpi-value">@Model.TotalOrders</div>
+        <div class="kpi-label">Total Purchase Orders</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(78,205,196,0.15);color:#4ecdc4;">✅</div>
+        <div class="kpi-value">@Model.CompletedOrders</div>
+        <div class="kpi-label">Completed Deliveries</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(255,217,61,0.15);color:#ffd93d;">⏳</div>
+        <div class="kpi-value">@Model.OutstandingOrders</div>
+        <div class="kpi-label">Active / In-Flight Orders</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(78,205,196,0.15);color:#4ecdc4;">💰</div>
+        <div class="kpi-value" style="font-size:20px;color:var(--accent2);">₹@Model.TotalSpend.ToString("N0")</div>
+        <div class="kpi-label">Total Spend (Delivered)</div>
+    </div>
+</div>
+
+<div class="grid-2 mb-6">
+    <div class="card">
+        <div class="card-title mb-4">Supplier Profile</div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="label">Company</div><div class="value">@Model.Supplier.CompanyName</div></div>
+            <div class="detail-item"><div class="label">Contact Person</div><div class="value">@Model.Supplier.ContactPerson</div></div>
+            <div class="detail-item"><div class="label">Phone</div><div class="value">@Model.Supplier.PhoneNumber</div></div>
+            <div class="detail-item"><div class="label">Email</div><div class="value">@Model.Supplier.Email</div></div>
+            <div class="detail-item"><div class="label">Payment Terms</div><div class="value">@Model.Supplier.PaymentTerms</div></div>
+            <div class="detail-item"><div class="label">Status</div><div class="value">@Model.Supplier.Status</div></div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Supplier.Address))
+        {
+            <hr />
+            <div class="detail-item">
+                <div class="label">Registered Address</div>
+                <div style="margin-top:4px;color:var(--text-muted)">@Model.Supplier.Address</div>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Supplier.Notes))
+        {
+            <hr />
+            <div class="detail-item">
+                <div class="label">Notes</div>
+                <div style="margin-top:4px;color:var(--text-muted)">@Model.Supplier.Notes</div>
+            </div>
+        }
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title"><i class="fa fa-boxes-packing"></i> Supplied Materials</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Material</th><th>Unit Price</th><th>Lead Time</th></tr>
+                </thead>
+                <tbody>
+                @if (Model.Supplier.SupplierMaterials != null && Model.Supplier.SupplierMaterials.Any())
+                {
+                    foreach (var sm in Model.Supplier.SupplierMaterials)
+                    {
+                        <tr>
+                            <td class="fw-600">@sm.Material?.Name</td>
+                            <td class="text-sm">₹@sm.QuotedPrice.ToString("N2")</td>
+                            <td class="text-muted text-sm">@(string.IsNullOrEmpty(sm.Notes) ? "Standard" : sm.Notes)</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="3" class="text-muted text-sm" style="text-align:center;padding:24px;">
+                            Categories: @(Model.Supplier.MaterialCategoriesSupplied ?? "General Construction")
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

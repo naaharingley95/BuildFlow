@@ -1,0 +1,78 @@
+@model BuildFlow.Models.Material
+@using BuildFlow.Models
+@{ ViewData["Title"] = $"Edit {Model.Name}"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back</a>
+        <h1>Edit Material: @Model.Name</h1>
+    </div>
+</div>
+
+<form method="post" asp-action="Edit" asp-route-id="@Model.Id">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="CreatedAtUtc" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="card mb-6" style="max-width:800px;">
+        <div class="grid-2 mb-4">
+            <div class="form-group">
+                <label class="form-label">Material Name *</label>
+                <input asp-for="Name" class="form-control" required />
+                <span asp-validation-for="Name" class="text-sm" style="color:#ff6b6b"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select asp-for="CategoryId" class="form-control" required>
+                    <option value="">Select Category...</option>
+                    @foreach (var c in ViewBag.Categories as List<MaterialCategory> ?? new())
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="text-sm" style="color:#ff6b6b"></span>
+            </div>
+        </div>
+
+        <div class="grid-3 mb-4">
+            <div class="form-group">
+                <label class="form-label">Unit of Measurement</label>
+                <select asp-for="Unit" class="form-control">
+                    @foreach (var u in Enum.GetValues<UnitOfMeasurement>())
+                    {
+                        <option value="@u">@u</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Benchmark Unit Price (₹) *</label>
+                <input asp-for="UnitPrice" type="number" step="0.01" min="0" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Minimum Stock Level</label>
+                <input asp-for="MinimumStockLevel" type="number" step="0.01" min="0" class="form-control" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Description / Specifications</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-check">
+                <input asp-for="IsActive" type="checkbox" class="form-check-input" />
+                <span>Is Active for Procurement</span>
+            </label>
+        </div>
+
+        <div class="flex-gap">
+            <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Changes</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
+        </div>
+    </div>
+</form>

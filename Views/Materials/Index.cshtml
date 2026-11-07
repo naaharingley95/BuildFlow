@@ -1,0 +1,104 @@
+@model List<BuildFlow.Models.Material>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Materials"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-box" style="color:var(--accent)"></i> Materials Catalog</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("Administrator") || User.IsInRole("Procurement") || User.IsInRole("ProcurementManager"))
+    {
+        <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> Add Material</a>
+    }
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label class="form-label">Search</label>
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="Material name or code..." class="form-control" />
+        </div>
+        <div>
+            <label class="form-label">Category</label>
+            <select name="categoryId" class="form-control">
+                <option value="">All Categories</option>
+                @foreach (var c in ViewBag.Categories as List<MaterialCategory> ?? new())
+                {
+                    <option value="@c.Id" selected="@(ViewBag.CategoryId?.ToString() == c.Id.ToString())">@c.Name</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Status</label>
+            <select name="isActive" class="form-control">
+                <option value="">All</option>
+                <option value="true" selected="@(ViewBag.IsActive?.ToString() == "True")">Active Only</option>
+                <option value="false" selected="@(ViewBag.IsActive?.ToString() == "False")">Inactive Only</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-filter"></i> Filter</button>
+        <a asp-action="Index" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Material Name</th>
+                    <th>Category</th>
+                    <th>Unit</th>
+                    <th>Standard Unit Price</th>
+                    <th>Minimum Stock</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@m.Id" style="color:var(--accent);text-decoration:none;font-weight:600;">
+                            @m.Name
+                        </a>
+                    </td>
+                    <td>@m.Category?.Name</td>
+                    <td class="text-muted">@m.Unit</td>
+                    <td class="fw-600">₹@m.UnitPrice.ToString("N2")</td>
+                    <td class="text-muted">@m.MinimumStockLevel.ToString("N2")</td>
+                    <td>
+                        @if (m.IsActive)
+                        {
+                            <span class="badge badge-green">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-gray">Inactive</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="flex-gap">
+                            <a asp-action="Details" asp-route-id="@m.Id" class="btn btn-secondary btn-sm">View</a>
+                            @if (User.IsInRole("Admin") || User.IsInRole("Administrator") || User.IsInRole("Procurement") || User.IsInRole("ProcurementManager"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@m.Id" class="btn btn-secondary btn-sm"><i class="fa fa-pen"></i></a>
+                            }
+                            @if (User.IsInRole("Admin") || User.IsInRole("Administrator"))
+                            {
+                                <form asp-action="Delete" asp-route-id="@m.Id" method="post" onsubmit="return confirm('Delete this material?');" style="margin:0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">No materials found</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

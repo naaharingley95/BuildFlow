@@ -1,0 +1,60 @@
+@{ ViewData["Title"] = "Analytics & Reports"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-chart-pie" style="color:var(--accent)"></i> Reports & Analytics</h1>
+    <p class="text-muted">Comprehensive operational data and financial analysis across all construction projects.</p>
+</div>
+
+<div class="grid-2 mb-6">
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(108,99,255,0.15);color:#6c63ff;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px;">
+                <i class="fa fa-warehouse"></i>
+            </div>
+            <h3>Inventory Status Report</h3>
+            <p class="text-muted mb-4">Real-time stock ledger, total units received, consumed, adjusted, available stock balance, and low-stock threshold triggers across all project sites.</p>
+        </div>
+        <a asp-action="Inventory" class="btn btn-primary" style="align-self:flex-start;">
+            <i class="fa fa-arrow-right"></i> Open Inventory Report
+        </a>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(78,205,196,0.15);color:#4ecdc4;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px;">
+                <i class="fa fa-chart-line"></i>
+            </div>
+            <h3>Material Consumption Report</h3>
+            <p class="text-muted mb-4">Detailed usage breakdowns by site, material, work activity, date range, and reported wastage ratios for precise project cost estimation.</p>
+        </div>
+        <a asp-action="Consumption" class="btn btn-primary" style="align-self:flex-start;">
+            <i class="fa fa-arrow-right"></i> Open Consumption Report
+        </a>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,217,61,0.15);color:#ffd93d;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px;">
+                <i class="fa fa-file-invoice-dollar"></i>
+            </div>
+            <h3>Procurement & Spend Report</h3>
+            <p class="text-muted mb-4">Purchase order expenditures, supplier commitments, delivery statuses, and financial totals across all historical contracts.</p>
+        </div>
+        <a asp-action="Procurement" class="btn btn-primary" style="align-self:flex-start;">
+            <i class="fa fa-arrow-right"></i> Open Procurement Report
+        </a>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,107,107,0.15);color:#ff6b6b;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px;">
+                <i class="fa fa-list-check"></i>
+            </div>
+            <h3>Material Requests Audit</h3>
+            <p class="text-muted mb-4">Site manager requisition timelines, priority levels, approval throughput, and fulfillment status for procurement planning.</p>
+        </div>
+        <a asp-action="Requests" class="btn btn-primary" style="align-self:flex-start;">
+            <i class="fa fa-arrow-right"></i> Open Requests Report
+        </a>
+    </div>
+</div>

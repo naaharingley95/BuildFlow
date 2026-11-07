@@ -1,0 +1,119 @@
+@model BuildFlow.Models.MaterialRequest
+@using BuildFlow.Models
+@{ ViewData["Title"] = "New Material Request"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back</a>
+        <h1>New Material Request</h1>
+    </div>
+</div>
+
+<form method="post" id="request-form">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="grid-2 mb-6">
+        <div class="card">
+            <div class="card-title mb-4">Request Header</div>
+
+            <div class="form-group">
+                <label class="form-label">Site *</label>
+                <select asp-for="SiteId" class="form-control" required>
+                    <option value="">Select site...</option>
+                    @foreach (var s in ViewBag.Sites as List<ConstructionSite> ?? new())
+                    {
+                        <option value="@s.Id">@s.SiteName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Required By Date *</label>
+                <input asp-for="RequiredByDate" type="date" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select asp-for="Priority" class="form-control">
+                    @foreach (var p in Enum.GetValues<RequestPriority>())
+                    {
+                        <option value="@p">@p</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Reason for Request</label>
+                <textarea asp-for="ReasonForRequest" class="form-control" rows="3" placeholder="Describe why these materials are needed..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Remarks</label>
+                <textarea asp-for="Remarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Items</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addRow()"><i class="fa fa-plus"></i> Add Item</button>
+            </div>
+
+            <div id="items-container">
+                <div class="item-row" style="display:grid;grid-template-columns:1fr 120px 1fr;gap:8px;margin-bottom:10px;align-items:end;">
+                    <div>
+                        <label class="form-label">Material</label>
+                        <select name="materialIds" class="form-control" required>
+                            <option value="">Select...</option>
+                            @foreach (var m in ViewBag.Materials as List<Material> ?? new())
+                            {
+                                <option value="@m.Id">@m.Name (@m.Unit)</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Quantity</label>
+                        <input type="number" name="quantities" class="form-control" min="0.01" step="0.01" placeholder="0.00" required />
+                    </div>
+                    <div>
+                        <label class="form-label">Purpose</label>
+                        <input type="text" name="purposes" class="form-control" placeholder="Usage purpose..." />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-gap">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Create Request</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+var materialsHtml = `@foreach (var m in ViewBag.Materials as List<Material> ?? new()) { @("<option value=\"" + m.Id + "\">" + m.Name + " (" + m.Unit + ")</option>") }`;
+
+function addRow() {
+    var row = document.createElement('div');
+    row.className = 'item-row';
+    row.style = 'display:grid;grid-template-columns:1fr 120px 1fr;gap:8px;margin-bottom:10px;align-items:end;';
+    row.innerHTML = `
+        <div>
+            <select name="materialIds" class="form-control" required>
+                <option value="">Select...</option>
+                ${materialsHtml}
+            </select>
+        </div>
+        <div>
+            <input type="number" name="quantities" class="form-control" min="0.01" step="0.01" placeholder="0.00" required />
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" name="purposes" class="form-control" placeholder="Purpose..." />
+            <button type="button" onclick="this.closest('.item-row').remove()" class="btn btn-danger btn-sm" style="flex-shrink:0"><i class="fa fa-trash"></i></button>
+        </div>`;
+    document.getElementById('items-container').appendChild(row);
+}
+</script>
+}

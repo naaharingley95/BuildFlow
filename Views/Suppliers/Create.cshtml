@@ -1,0 +1,87 @@
+@model BuildFlow.Models.Supplier
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Add New Supplier"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back</a>
+        <h1>Add New Supplier</h1>
+    </div>
+</div>
+
+<form method="post" asp-action="Create">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="card mb-6" style="max-width:800px;">
+        <div class="grid-2 mb-4">
+            <div class="form-group">
+                <label class="form-label">Company Name *</label>
+                <input asp-for="CompanyName" class="form-control" placeholder="e.g. BuildMart Supplies Ltd" required />
+                <span asp-validation-for="CompanyName" class="text-sm" style="color:#ff6b6b"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Contact Person *</label>
+                <input asp-for="ContactPerson" class="form-control" placeholder="e.g. Rajan Mehta" required />
+                <span asp-validation-for="ContactPerson" class="text-sm" style="color:#ff6b6b"></span>
+            </div>
+        </div>
+
+        <div class="grid-2 mb-4">
+            <div class="form-group">
+                <label class="form-label">Phone Number *</label>
+                <input asp-for="PhoneNumber" class="form-control" placeholder="+91-9876543210" required />
+                <span asp-validation-for="PhoneNumber" class="text-sm" style="color:#ff6b6b"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <input asp-for="Email" type="email" class="form-control" placeholder="supplier@example.com" required />
+                <span asp-validation-for="Email" class="text-sm" style="color:#ff6b6b"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Office / Plant Address</label>
+            <input asp-for="Address" class="form-control" placeholder="Street, Industrial Area, City..." />
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Material Categories Supplied</label>
+            <input asp-for="MaterialCategoriesSupplied" class="form-control" placeholder="e.g. Concrete, Steel, Cement..." />
+        </div>
+
+        <div class="grid-2 mb-4">
+            <div class="form-group">
+                <label class="form-label">Payment Terms</label>
+                <select asp-for="PaymentTerms" class="form-control">
+                    @foreach (var pt in Enum.GetValues<PaymentTerms>())
+                    {
+                        <option value="@pt">@pt</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Supplier Status</label>
+                <select asp-for="Status" class="form-control">
+                    @foreach (var st in Enum.GetValues<SupplierStatus>())
+                    {
+                        <option value="@st">@st</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Bank details, GSTIN, discount terms..."></textarea>
+        </div>
+
+        <div class="flex-gap">
+            <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Supplier</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </div>
+    </div>
+</form>

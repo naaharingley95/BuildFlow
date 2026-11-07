@@ -1,0 +1,70 @@
+@model List<BuildFlow.Models.ConstructionSite>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Construction Sites"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-building" style="color:var(--accent)"></i> Construction Sites</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("Administrator"))
+    {
+        <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> Add New Site</a>
+    }
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Site Name</th>
+                    <th>Location</th>
+                    <th>Site Manager</th>
+                    <th>Start Date</th>
+                    <th>Expected Completion</th>
+                    <th>Status</th>
+                    <th>Active</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@s.Id" style="color:var(--accent);text-decoration:none;font-weight:600;">
+                            @s.SiteName
+                        </a>
+                    </td>
+                    <td class="text-sm">@s.Location</td>
+                    <td class="text-muted text-sm">@(s.SiteManager?.FullName ?? "Unassigned")</td>
+                    <td class="text-sm text-muted">@s.StartDate.ToString("dd MMM yyyy")</td>
+                    <td class="text-sm text-muted">@(s.ExpectedCompletionDate.HasValue ? s.ExpectedCompletionDate.Value.ToString("dd MMM yyyy") : "—")</td>
+                    <td><partial name="_StatusBadge" model="@s.Status.ToString()" /></td>
+                    <td>
+                        @if (s.IsActive)
+                        {
+                            <span class="badge badge-green">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-gray">Inactive</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="flex-gap">
+                            <a asp-action="Details" asp-route-id="@s.Id" class="btn btn-secondary btn-sm">Details</a>
+                            @if (User.IsInRole("Admin") || User.IsInRole("Administrator"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-secondary btn-sm"><i class="fa fa-pen"></i></a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No sites registered</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

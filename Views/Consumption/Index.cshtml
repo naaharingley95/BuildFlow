@@ -1,0 +1,81 @@
+@model List<BuildFlow.Models.MaterialConsumption>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Material Consumption"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-chart-line" style="color:var(--accent)"></i> Material Consumption</h1>
+    <a asp-action="Record" class="btn btn-primary"><i class="fa fa-plus"></i> Record Consumption</a>
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label class="form-label">Site</label>
+            <select name="siteId" class="form-control">
+                <option value="">All Sites</option>
+                @foreach (var s in ViewBag.Sites as List<ConstructionSite> ?? new())
+                {
+                    <option value="@s.Id" selected="@(ViewBag.SiteId?.ToString() == s.Id.ToString())">@s.SiteName</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Material</label>
+            <select name="materialId" class="form-control">
+                <option value="">All Materials</option>
+                @foreach (var m in ViewBag.Materials as List<Material> ?? new())
+                {
+                    <option value="@m.Id" selected="@(ViewBag.MaterialId?.ToString() == m.Id.ToString())">@m.Name</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label">From Date</label>
+            <input type="date" name="from" value="@(ViewBag.From != null ? ((DateTime)ViewBag.From).ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <div>
+            <label class="form-label">To Date</label>
+            <input type="date" name="to" value="@(ViewBag.To != null ? ((DateTime)ViewBag.To).ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-filter"></i> Filter</button>
+        <a asp-action="Index" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Site</th>
+                    <th>Material</th>
+                    <th>Work Activity</th>
+                    <th>Quantity Used</th>
+                    <th>Wastage</th>
+                    <th>Recorded By</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td class="text-sm">@c.ConsumptionDate.ToString("dd MMM yyyy")</td>
+                    <td>@c.Site?.SiteName</td>
+                    <td class="fw-600">@c.Material?.Name</td>
+                    <td class="text-sm text-muted">@c.WorkActivity</td>
+                    <td style="font-weight:600;color:var(--accent2)">@c.ConsumedQuantity.ToString("N2") @c.Material?.Unit</td>
+                    <td style="color:@(c.WastageQuantity > 0 ? "#ff6b6b" : "inherit")">@c.WastageQuantity.ToString("N2")</td>
+                    <td class="text-muted text-sm">@c.RecordedBy?.FullName</td>
+                    <td><a asp-action="Details" asp-route-id="@c.Id" class="btn btn-secondary btn-sm">View</a></td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No consumption records found</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

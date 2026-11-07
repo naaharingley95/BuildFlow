@@ -1,0 +1,93 @@
+@model List<BuildFlow.Services.ProcurementReportRow>
+@using BuildFlow.Models
+@{ 
+    ViewData["Title"] = "Procurement Report"; 
+    var totalSpend = Model.Sum(x => x.TotalAmount);
+}
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> All Reports</a>
+        <h1><i class="fa fa-file-invoice-dollar" style="color:var(--accent)"></i> Procurement & Spend Report</h1>
+    </div>
+    <div class="flex-gap">
+        <a asp-action="ExportProcurementCsv" asp-route-siteId="@ViewBag.SiteId" asp-route-from="@(ViewBag.From != null ? ((DateTime)ViewBag.From).ToString("yyyy-MM-dd") : "")" asp-route-to="@(ViewBag.To != null ? ((DateTime)ViewBag.To).ToString("yyyy-MM-dd") : "")" class="btn btn-secondary"><i class="fa fa-file-csv"></i> Export CSV</a>
+        <button onclick="window.print()" class="btn btn-secondary"><i class="fa fa-print"></i> Print</button>
+    </div>
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label class="form-label">Site</label>
+            <select name="siteId" class="form-control">
+                <option value="">All Sites</option>
+                @foreach (var s in ViewBag.Sites as List<ConstructionSite> ?? new())
+                {
+                    <option value="@s.Id" selected="@(ViewBag.SiteId?.ToString() == s.Id.ToString())">@s.SiteName</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label">From Date</label>
+            <input type="date" name="from" value="@(ViewBag.From != null ? ((DateTime)ViewBag.From).ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <div>
+            <label class="form-label">To Date</label>
+            <input type="date" name="to" value="@(ViewBag.To != null ? ((DateTime)ViewBag.To).ToString("yyyy-MM-dd") : "")" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-filter"></i> Filter</button>
+        <a asp-action="Procurement" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="kpi-grid mb-6">
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(108,99,255,0.15);color:#6c63ff;">📄</div>
+        <div class="kpi-value">@Model.Count</div>
+        <div class="kpi-label">Total Orders</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(78,205,196,0.15);color:#4ecdc4;">💰</div>
+        <div class="kpi-value" style="color:var(--accent2)">₹@totalSpend.ToString("N2")</div>
+        <div class="kpi-label">Cumulative Spend</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>PO Number</th>
+                    <th>Site</th>
+                    <th>Supplier</th>
+                    <th>Order Date</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="PurchaseOrders" asp-action="Index" style="color:var(--accent);text-decoration:none;font-weight:600;">
+                            @p.OrderNumber
+                        </a>
+                    </td>
+                    <td>@p.SiteName</td>
+                    <td>@p.SupplierName</td>
+                    <td class="text-sm text-muted">@p.OrderDate.ToString("dd MMM yyyy")</td>
+                    <td class="fw-600" style="color:var(--accent2);">₹@p.TotalAmount.ToString("N2")</td>
+                    <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">No procurement orders found</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

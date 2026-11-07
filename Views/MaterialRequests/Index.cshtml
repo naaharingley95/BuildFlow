@@ -1,0 +1,64 @@
+@model List<BuildFlow.Models.MaterialRequest>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Material Requests"; }
+
+<div class="page-header">
+    <h1><i class="fa fa-list-check" style="color:var(--accent)"></i> Material Requests</h1>
+    <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> New Request</a>
+</div>
+
+<div class="filter-bar mb-4">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label class="form-label">Site</label>
+            <select name="siteId" class="form-control">
+                <option value="">All Sites</option>
+                @foreach (var s in ViewBag.Sites as List<BuildFlow.Models.ConstructionSite> ?? new())
+                {
+                    <option value="@s.Id" selected="@(ViewBag.SiteId?.ToString() == s.Id.ToString())">@s.SiteName</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control">
+                <option value="">All Statuses</option>
+                @foreach (var s in Enum.GetValues<RequestStatus>())
+                {
+                    <option value="@s" selected="@(ViewBag.Status?.ToString() == s.ToString())">@s</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary"><i class="fa fa-filter"></i> Filter</button>
+        <a asp-action="Index" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Request #</th><th>Site</th><th>Requested By</th><th>Date</th><th>Priority</th><th>Status</th><th>Items</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@r.Id" style="color:var(--accent);text-decoration:none;font-weight:600;">@r.RequestNumber</a></td>
+                    <td>@r.Site?.SiteName</td>
+                    <td>@r.RequestedBy?.FullName</td>
+                    <td class="text-muted text-sm">@r.RequestDate.ToString("dd MMM yyyy")</td>
+                    <td><partial name="_PriorityBadge" model="@r.Priority.ToString()" /></td>
+                    <td><partial name="_StatusBadge" model="@r.Status.ToString()" /></td>
+                    <td class="text-muted">@r.Items.Count</td>
+                    <td><a asp-action="Details" asp-route-id="@r.Id" class="btn btn-secondary btn-sm">View</a></td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No requests found</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

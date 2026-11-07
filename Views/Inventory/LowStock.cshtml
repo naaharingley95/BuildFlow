@@ -1,0 +1,68 @@
+@model List<BuildFlow.Models.SiteInventory>
+@using BuildFlow.Models
+@{ ViewData["Title"] = "Low Stock Alerts"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back to Inventory</a>
+        <h1><i class="fa fa-triangle-exclamation" style="color:#ff6b6b"></i> Low Stock Alerts</h1>
+        <p class="text-muted">Materials where current available stock is below or equal to the designated minimum threshold.</p>
+    </div>
+    <a asp-controller="MaterialRequests" asp-action="Create" class="btn btn-primary">
+        <i class="fa fa-plus"></i> Create Material Request
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Site</th>
+                    <th>Material</th>
+                    <th>Category</th>
+                    <th>Unit</th>
+                    <th>Available Stock</th>
+                    <th>Minimum Required</th>
+                    <th>Deficit</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var inv in Model)
+            {
+                var deficit = Math.Max(0, inv.MinimumStockLevel - inv.AvailableStock);
+                <tr>
+                    <td>
+                        <a asp-controller="Sites" asp-action="Details" asp-route-id="@inv.SiteId" style="color:var(--text);font-weight:600;text-decoration:none;">
+                            @inv.Site?.SiteName
+                        </a>
+                    </td>
+                    <td>
+                        <strong style="color:var(--accent);">@inv.Material?.Name</strong>
+                    </td>
+                    <td class="text-muted text-sm">@inv.Material?.Category?.Name</td>
+                    <td class="text-muted">@inv.Material?.Unit</td>
+                    <td style="color:#ff6b6b;font-weight:700;font-size:15px;">@inv.AvailableStock.ToString("N2")</td>
+                    <td class="text-muted">@inv.MinimumStockLevel.ToString("N2")</td>
+                    <td style="color:#ffd93d;font-weight:600;">@deficit.ToString("N2")</td>
+                    <td>
+                        <a asp-controller="MaterialRequests" asp-action="Create" class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"></i> Request
+                        </a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="8" style="text-align:center;padding:40px;color:var(--accent2);">
+                        <i class="fa fa-circle-check" style="font-size:28px;margin-bottom:8px;display:block;"></i>
+                        All stock levels are currently healthy and above minimum thresholds!
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

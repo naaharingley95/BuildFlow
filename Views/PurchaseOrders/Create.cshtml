@@ -1,0 +1,186 @@
+@model BuildFlow.Models.PurchaseOrder
+@using BuildFlow.Models
+@{ ViewData["Title"] = "New Purchase Order"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back</a>
+        <h1>New Purchase Order</h1>
+        @if (ViewBag.MaterialRequestId != null)
+        {
+            <p class="text-muted">Linked to material request</p>
+        }
+    </div>
+</div>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    @if (ViewBag.MaterialRequestId != null)
+    {
+        <input type="hidden" name="materialRequestId" value="@ViewBag.MaterialRequestId" />
+    }
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="grid-2 mb-6">
+        <div class="card">
+            <div class="card-title mb-4">Order Header</div>
+
+            <div class="form-group">
+                <label class="form-label">Supplier *</label>
+                <select asp-for="SupplierId" class="form-control" required>
+                    <option value="">Select supplier...</option>
+                    @foreach (var s in ViewBag.Suppliers as List<Supplier> ?? new())
+                    {
+                        <option value="@s.Id">@s.CompanyName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Site *</label>
+                <select asp-for="SiteId" class="form-control" required>
+                    <option value="">Select site...</option>
+                    @foreach (var s in ViewBag.Sites as List<ConstructionSite> ?? new())
+                    {
+                        <option value="@s.Id">@s.SiteName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Order Date *</label>
+                <input asp-for="OrderDate" type="date" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Expected Delivery Date *</label>
+                <input asp-for="ExpectedDeliveryDate" type="date" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tax Amount (₹)</label>
+                <input asp-for="TaxAmount" type="number" class="form-control" min="0" step="0.01" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Other Charges (₹)</label>
+                <input asp-for="OtherCharges" type="number" class="form-control" min="0" step="0.01" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Additional notes..."></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Items</span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addRow()"><i class="fa fa-plus"></i> Add Item</button>
+            </div>
+
+            <div id="items-container">
+            @{
+                var linkedReq = ViewBag.MaterialRequest as MaterialRequest;
+            }
+            @if (linkedReq?.Items != null && linkedReq.Items.Any())
+            {
+                foreach (var item in linkedReq.Items)
+                {
+                    var qty = item.ApprovedQuantity > 0 ? item.ApprovedQuantity : item.RequestedQuantity;
+                    var price = item.Material?.UnitPrice ?? 0;
+                    <div class="item-row" style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px;">
+                        <div style="display:grid;grid-template-columns:1fr 110px 120px 36px;gap:8px;align-items:end;">
+                            <div>
+                                <label class="form-label">Material</label>
+                                <select name="materialIds" class="form-control" required>
+                                    @foreach (var m in ViewBag.Materials as List<Material> ?? new())
+                                    {
+                                        <option value="@m.Id" selected="@(m.Id == item.MaterialId)">@m.Name (@m.Unit)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Qty</label>
+                                <input type="number" name="quantities" value="@qty" class="form-control" min="0.01" step="0.01" required oninput="calcSubtotal()" />
+                            </div>
+                            <div>
+                                <label class="form-label">Unit Price (₹)</label>
+                                <input type="number" name="unitPrices" value="@price" class="form-control" min="0" step="0.01" required oninput="calcSubtotal()" />
+                            </div>
+                            <button type="button" onclick="this.closest('.item-row').remove();calcSubtotal();" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="item-row" style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px;">
+                    <div style="display:grid;grid-template-columns:1fr 110px 120px;gap:8px;align-items:end;">
+                        <div>
+                            <label class="form-label">Material</label>
+                            <select name="materialIds" class="form-control" required>
+                                <option value="">Select...</option>
+                                @foreach (var m in ViewBag.Materials as List<Material> ?? new())
+                                {
+                                    <option value="@m.Id">@m.Name (@m.Unit)</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Qty</label>
+                            <input type="number" name="quantities" class="form-control" min="0.01" step="0.01" placeholder="0.00" required oninput="calcSubtotal()" />
+                        </div>
+                        <div>
+                            <label class="form-label">Unit Price (₹)</label>
+                            <input type="number" name="unitPrices" class="form-control" min="0" step="0.01" placeholder="0.00" required oninput="calcSubtotal()" />
+                        </div>
+                    </div>
+                </div>
+            }
+            </div>
+
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+                <div class="flex-between"><span class="text-muted">Subtotal</span><span id="subtotal" class="fw-600">₹0.00</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-gap">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Create Purchase Order</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+var materialsHtml = `@foreach (var m in ViewBag.Materials as List<Material> ?? new()) { @("<option value=\"" + m.Id + "\">" + m.Name + " (" + m.Unit + ")</option>") }`;
+
+function addRow() {
+    var row = document.createElement('div');
+    row.className = 'item-row';
+    row.style = 'border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px;';
+    row.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 110px 120px 36px;gap:8px;align-items:end;">
+            <select name="materialIds" class="form-control" required>
+                <option value="">Select...</option>
+                ${materialsHtml}
+            </select>
+            <input type="number" name="quantities" class="form-control" min="0.01" step="0.01" placeholder="Qty" required oninput="calcSubtotal()" />
+            <input type="number" name="unitPrices" class="form-control" min="0" step="0.01" placeholder="Price" required oninput="calcSubtotal()" />
+            <button type="button" onclick="this.closest('.item-row').remove();calcSubtotal();" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+        </div>`;
+    document.getElementById('items-container').appendChild(row);
+}
+
+function calcSubtotal() {
+    var qtys = document.querySelectorAll('[name=quantities]');
+    var prices = document.querySelectorAll('[name=unitPrices]');
+    var total = 0;
+    for (var i = 0; i < qtys.length; i++) total += (parseFloat(qtys[i].value)||0) * (parseFloat(prices[i].value)||0);
+    document.getElementById('subtotal').textContent = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits:2});
+}
+document.querySelectorAll('[name=quantities],[name=unitPrices]').forEach(el => el.addEventListener('input', calcSubtotal));
+calcSubtotal();
+</script>
+}

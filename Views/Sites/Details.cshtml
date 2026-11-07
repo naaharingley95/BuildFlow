@@ -1,0 +1,196 @@
+@model BuildFlow.Services.SiteDetailsDto
+@using BuildFlow.Models
+@{ ViewData["Title"] = Model.Site.SiteName; }
+
+<div class="page-header">
+    <div>
+        <div class="flex-gap mb-4">
+            <a asp-action="Index" class="btn btn-secondary btn-sm"><i class="fa fa-arrow-left"></i> Back to Sites</a>
+            <partial name="_StatusBadge" model="@Model.Site.Status.ToString()" />
+            @if (Model.Site.IsActive)
+            {
+                <span class="badge badge-green">Active</span>
+            }
+            else
+            {
+                <span class="badge badge-gray">Inactive</span>
+            }
+        </div>
+        <h1>@Model.Site.SiteName</h1>
+        <p class="text-muted"><i class="fa fa-location-dot"></i> @Model.Site.Location &bull; Manager: @(Model.Site.SiteManager?.FullName ?? "Unassigned")</p>
+    </div>
+    <div class="flex-gap">
+        @if (User.IsInRole("Admin") || User.IsInRole("Administrator"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Site.Id" class="btn btn-secondary"><i class="fa fa-pen"></i> Edit</a>
+            @if (Model.Site.IsActive)
+            {
+                <form asp-action="Deactivate" asp-route-id="@Model.Site.Id" method="post" onsubmit="return confirm('Deactivate this site?');" style="margin:0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger"><i class="fa fa-ban"></i> Deactivate</button>
+                </form>
+            }
+        }
+        <a asp-controller="Inventory" asp-action="Index" asp-route-siteId="@Model.Site.Id" class="btn btn-primary">
+            <i class="fa fa-warehouse"></i> Site Stock
+        </a>
+    </div>
+</div>
+
+<div class="grid-2 mb-6">
+    <div class="card">
+        <div class="card-title mb-4">Site Overview</div>
+        <div class="detail-grid">
+            <div class="detail-item"><div class="label">Site Name</div><div class="value">@Model.Site.SiteName</div></div>
+            <div class="detail-item"><div class="label">Location</div><div class="value">@Model.Site.Location</div></div>
+            <div class="detail-item"><div class="label">Site Manager</div><div class="value">@(Model.Site.SiteManager?.FullName ?? "Unassigned")</div></div>
+            <div class="detail-item"><div class="label">Start Date</div><div class="value">@Model.Site.StartDate.ToString("dd MMM yyyy")</div></div>
+            <div class="detail-item"><div class="label">Expected Completion</div><div class="value">@(Model.Site.ExpectedCompletionDate.HasValue ? Model.Site.ExpectedCompletionDate.Value.ToString("dd MMM yyyy") : "—")</div></div>
+            <div class="detail-item"><div class="label">Status</div><div class="value">@Model.Site.Status</div></div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Site.ProjectDescription))
+        {
+            <hr />
+            <div class="detail-item">
+                <div class="label">Project Description</div>
+                <div style="margin-top:4px;color:var(--text-muted)">@Model.Site.ProjectDescription</div>
+            </div>
+        }
+    </div>
+
+    <div class="card">
+        <div class="card-title mb-4">Quick Metrics</div>
+        <div class="kpi-grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0;">
+            <div class="kpi-card">
+                <div class="kpi-value">@Model.Inventories.Count</div>
+                <div class="kpi-label">Tracked Items</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" style="color:@(Model.Inventories.Count(x => x.IsLowStock) > 0 ? "#ff6b6b" : "inherit")">
+                    @Model.Inventories.Count(x => x.IsLowStock)
+                </div>
+                <div class="kpi-label">Low Stock Alerts</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">@Model.RecentRequests.Count</div>
+                <div class="kpi-label">Recent Requests</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">@Model.RecentOrders.Count</div>
+                <div class="kpi-label">Recent Orders</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Inventory at Site -->
+<div class="card mb-6">
+    <div class="card-header">
+        <span class="card-title"><i class="fa fa-boxes-stacked"></i> Current Stock at Site</span>
+        <a asp-controller="Inventory" asp-action="Index" asp-route-siteId="@Model.Site.Id" class="btn btn-secondary btn-sm">Full Inventory</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Material</th>
+                    <th>Category</th>
+                    <th>Available Stock</th>
+                    <th>Minimum Required</th>
+                    <th>Unit</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var inv in Model.Inventories)
+            {
+                <tr>
+                    <td class="fw-600">@inv.Material?.Name</td>
+                    <td class="text-muted text-sm">@inv.Material?.Category?.Name</td>
+                    <td style="font-weight:700;color:@(inv.IsLowStock ? "#ff6b6b" : "var(--accent2)")">
+                        @inv.AvailableStock.ToString("N2")
+                    </td>
+                    <td class="text-muted">@inv.MinimumStockLevel.ToString("N2")</td>
+                    <td class="text-muted">@inv.Material?.Unit</td>
+                    <td>
+                        @if (inv.IsLowStock)
+                        {
+                            <span class="badge badge-red">Low Stock</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-green">OK</span>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Inventories.Any())
+            {
+                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">No inventory records assigned to this site yet.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="grid-2 mb-6">
+    <!-- Recent Requests -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Recent Requests</span>
+            <a asp-controller="MaterialRequests" asp-action="Index" asp-route-siteId="@Model.Site.Id" class="btn btn-secondary btn-sm">All</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Number</th><th>By</th><th>Date</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var r in Model.RecentRequests)
+                {
+                    <tr>
+                        <td><a asp-controller="MaterialRequests" asp-action="Details" asp-route-id="@r.Id" style="color:var(--accent);text-decoration:none;">@r.RequestNumber</a></td>
+                        <td class="text-muted text-sm">@r.RequestedBy?.FullName</td>
+                        <td class="text-sm">@r.RequestDate.ToString("dd MMM")</td>
+                        <td><partial name="_StatusBadge" model="@r.Status.ToString()" /></td>
+                    </tr>
+                }
+                @if (!Model.RecentRequests.Any())
+                {
+                    <tr><td colspan="4" class="text-muted text-sm" style="text-align:center;padding:16px;">No requests recorded</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Recent Orders</span>
+            <a asp-controller="PurchaseOrders" asp-action="Index" asp-route-siteId="@Model.Site.Id" class="btn btn-secondary btn-sm">All</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>PO Number</th><th>Supplier</th><th>Amount</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var po in Model.RecentOrders)
+                {
+                    <tr>
+                        <td><a asp-controller="PurchaseOrders" asp-action="Details" asp-route-id="@po.Id" style="color:var(--accent);text-decoration:none;">@po.OrderNumber</a></td>
+                        <td class="text-sm">@po.Supplier?.CompanyName</td>
+                        <td class="fw-600 text-sm">₹@po.TotalAmount.ToString("N0")</td>
+                        <td><partial name="_StatusBadge" model="@po.Status.ToString()" /></td>
+                    </tr>
+                }
+                @if (!Model.RecentOrders.Any())
+                {
+                    <tr><td colspan="4" class="text-muted text-sm" style="text-align:center;padding:16px;">No orders recorded</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,69 @@
+@model BuildFlow.Models.ConstructionSite
+@using BuildFlow.Models
+@{ ViewData["Title"] = $"Edit {Model.SiteName}"; }
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back</a>
+        <h1>Edit Site: @Model.SiteName</h1>
+    </div>
+</div>
+
+<form method="post" asp-action="Edit" asp-route-id="@Model.Id">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="card mb-6" style="max-width:800px;">
+        <div class="form-group">
+            <label class="form-label">Site Name *</label>
+            <input asp-for="SiteName" class="form-control" required />
+            <span asp-validation-for="SiteName" class="text-sm" style="color:#ff6b6b"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Location / Address *</label>
+            <input asp-for="Location" class="form-control" required />
+            <span asp-validation-for="Location" class="text-sm" style="color:#ff6b6b"></span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Project Description</label>
+            <textarea asp-for="ProjectDescription" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="grid-3 mb-4">
+            <div class="form-group">
+                <label class="form-label">Start Date *</label>
+                <input asp-for="StartDate" type="date" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Expected Completion</label>
+                <input asp-for="ExpectedCompletionDate" type="date" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Project Status</label>
+                <select asp-for="Status" class="form-control">
+                    @foreach (var st in Enum.GetValues<SiteStatus>())
+                    {
+                        <option value="@st">@st</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-check">
+                <input asp-for="IsActive" type="checkbox" class="form-check-input" />
+                <span>Is Active Project</span>
+            </label>
+        </div>
+
+        <div class="flex-gap">
+            <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Changes</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
+        </div>
+    </div>
+</form>

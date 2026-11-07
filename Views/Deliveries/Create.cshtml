@@ -1,0 +1,94 @@
+@model BuildFlow.Models.Delivery
+@using BuildFlow.Models
+@{ 
+    ViewData["Title"] = "Schedule Delivery"; 
+    var po = ViewBag.PurchaseOrder as PurchaseOrder;
+}
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="btn btn-secondary btn-sm mb-4"><i class="fa fa-arrow-left"></i> Back</a>
+        <h1>Schedule Delivery for PO @po?.OrderNumber</h1>
+        <p class="text-muted">Site: @po?.Site?.SiteName &bull; Supplier: @po?.Supplier?.CompanyName</p>
+    </div>
+</div>
+
+<form method="post" asp-action="Create">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="PurchaseOrderId" />
+    <input type="hidden" asp-for="SiteId" />
+    <input type="hidden" asp-for="SupplierId" />
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="grid-2 mb-6">
+        <div class="card">
+            <div class="card-title mb-4">Delivery Details</div>
+
+            <div class="form-group">
+                <label class="form-label">Dispatch Date (Optional)</label>
+                <input asp-for="DispatchDate" type="date" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Expected Arrival Date *</label>
+                <input asp-for="ExpectedArrivalDate" type="date" class="form-control" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Vehicle / Tracking Number</label>
+                <input asp-for="VehicleNumber" class="form-control" placeholder="e.g. MH-12-AB-1234" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Remarks</label>
+                <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="Delivery or driver instructions..."></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title mb-4">Items to Deliver</div>
+            <p class="text-muted text-sm mb-4">Set the quantity scheduled for this delivery batch.</p>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Total Ordered</th>
+                            <th>Already Received</th>
+                            <th>Deliver Now</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (po?.Items != null)
+                    {
+                        foreach (var item in po.Items)
+                        {
+                            var remaining = Math.Max(0, item.OrderedQuantity - item.ReceivedQuantity);
+                            <tr>
+                                <td>
+                                    <strong>@item.Material?.Name</strong>
+                                    <div class="text-sm text-muted">@item.Material?.Unit</div>
+                                    <input type="hidden" name="poItemIds" value="@item.Id" />
+                                    <input type="hidden" name="materialIds" value="@item.MaterialId" />
+                                </td>
+                                <td>@item.OrderedQuantity.ToString("N2")</td>
+                                <td class="text-muted">@item.ReceivedQuantity.ToString("N2")</td>
+                                <td style="width:130px;">
+                                    <input type="number" name="orderedQtys" value="@remaining" min="0" max="@(remaining > 0 ? remaining : item.OrderedQuantity)" step="0.01" class="form-control" required />
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-gap">
+        <button type="submit" class="btn btn-primary"><i class="fa fa-truck"></i> Confirm & Schedule Delivery</button>
+        <a asp-controller="PurchaseOrders" asp-action="Details" asp-route-id="@Model.PurchaseOrderId" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

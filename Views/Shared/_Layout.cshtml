@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — BuildFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d2e;
+            --surface2: #222538;
+            --border: rgba(255,255,255,0.07);
+            --accent: #6c63ff;
+            --accent2: #4ecdc4;
+            --accent3: #ff6b6b;
+            --accent4: #ffd93d;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --sidebar-w: 240px;
+            --radius: 12px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            font-size: 14px;
+        }
+
+        /* ── Sidebar ───────────────────────────────────── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-brand-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        .sidebar-brand-text {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-section {
+            padding: 16px 12px 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .sidebar-nav { padding: 4px 8px; }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 2px;
+        }
+
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background: rgba(108, 99, 255, 0.12);
+            color: var(--text);
+        }
+
+        .sidebar-nav a.active { color: var(--accent); }
+
+        .sidebar-nav a i { width: 16px; text-align: center; font-size: 13px; }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Main ───────────────────────────────────────── */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky; top: 0; z-index: 90;
+        }
+
+        .topbar-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+        .avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 13px;
+            cursor: pointer;
+        }
+
+        .page-content { padding: 24px; flex: 1; }
+
+        /* ── Cards ──────────────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-title { font-size: 15px; font-weight: 600; }
+
+        /* ── Badges / status ────────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-green  { background: rgba(78,205,196,0.15); color: #4ecdc4; }
+        .badge-blue   { background: rgba(108,99,255,0.15); color: #6c63ff; }
+        .badge-yellow { background: rgba(255,217,61,0.15); color: #ffd93d; }
+        .badge-red    { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .badge-gray   { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .badge-orange { background: rgba(255,165,0,0.15); color: #ffa500; }
+
+        /* ── Buttons ────────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary   { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #5a52d5; }
+        .btn-success   { background: #4ecdc4; color: #0f1117; }
+        .btn-success:hover { background: #3dbdb5; }
+        .btn-danger    { background: var(--accent3); color: #fff; }
+        .btn-danger:hover { background: #e05555; }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--surface); }
+        .btn-warning   { background: var(--accent4); color: #0f1117; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+        /* ── Forms ──────────────────────────────────────── */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .form-control {
+            width: 100%;
+            padding: 9px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+        }
+
+        select.form-control option { background: var(--surface2); }
+
+        .form-check { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .form-check-input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+        /* ── Tables ─────────────────────────────────────── */
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+        tbody tr:last-child { border-bottom: none; }
+
+        tbody td {
+            padding: 12px 14px;
+            vertical-align: middle;
+        }
+
+        /* ── Alerts ─────────────────────────────────────── */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .alert-success { background: rgba(78,205,196,0.1); border: 1px solid rgba(78,205,196,0.3); color: #4ecdc4; }
+        .alert-danger  { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: #ff6b6b; }
+        .alert-warning { background: rgba(255,217,61,0.1);  border: 1px solid rgba(255,217,61,0.3);  color: #ffd93d; }
+        .alert-info    { background: rgba(108,99,255,0.1);  border: 1px solid rgba(108,99,255,0.3);  color: #6c63ff; }
+
+        /* ── KPI grid ───────────────────────────────────── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .kpi-icon {
+            width: 38px; height: 38px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px;
+        }
+
+        .kpi-value { font-size: 26px; font-weight: 700; }
+        .kpi-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        /* ── Misc ───────────────────────────────────────── */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; }
+        .flex-gap { display: flex; align-items: center; gap: 10px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-6 { margin-bottom: 24px; }
+        .text-muted { color: var(--text-muted); }
+        .text-sm { font-size: 12px; }
+        .text-right { text-align: right; }
+        .fw-600 { font-weight: 600; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .filter-bar .form-control { width: auto; }
+        .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .detail-item .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .detail-item .value { font-weight: 600; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .page-header h1 { font-size: 22px; font-weight: 700; }
+
+        @@media(max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main { margin-left: 0; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">🏗️</div>
+            <span class="sidebar-brand-text">BuildFlow</span>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+        <div class="sidebar-nav">
+            <a asp-controller="Dashboard" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                <i class="fa fa-gauge-high"></i> Dashboard
+            </a>
+        </div>
+
+        <div class="sidebar-section">Procurement</div>
+        <div class="sidebar-nav">
+            <a asp-controller="MaterialRequests" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "MaterialRequests" ? "active" : "")">
+                <i class="fa fa-list-check"></i> Material Requests
+            </a>
+            <a asp-controller="PurchaseOrders" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "PurchaseOrders" ? "active" : "")">
+                <i class="fa fa-file-invoice"></i> Purchase Orders
+            </a>
+            <a asp-controller="Deliveries" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Deliveries" ? "active" : "")">
+                <i class="fa fa-truck"></i> Deliveries
+            </a>
+        </div>
+
+        <div class="sidebar-section">Inventory</div>
+        <div class="sidebar-nav">
+            <a asp-controller="Inventory" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "active" : "")">
+                <i class="fa fa-warehouse"></i> Inventory
+            </a>
+            <a asp-controller="Inventory" asp-action="LowStock">
+                <i class="fa fa-triangle-exclamation"></i> Low Stock
+            </a>
+            <a asp-controller="Consumption" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Consumption" ? "active" : "")">
+                <i class="fa fa-chart-line"></i> Consumption
+            </a>
+        </div>
+
+        <div class="sidebar-section">Masters</div>
+        <div class="sidebar-nav">
+            <a asp-controller="Sites" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Sites" ? "active" : "")">
+                <i class="fa fa-building"></i> Sites
+            </a>
+            <a asp-controller="Materials" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Materials" ? "active" : "")">
+                <i class="fa fa-box"></i> Materials
+            </a>
+            <a asp-controller="Suppliers" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Suppliers" ? "active" : "")">
+                <i class="fa fa-people-carry-box"></i> Suppliers
+            </a>
+        </div>
+
+        <div class="sidebar-section">Analytics</div>
+        <div class="sidebar-nav">
+            <a asp-controller="Reports" asp-action="Index" class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")">
+                <i class="fa fa-chart-bar"></i> Reports
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-nav">
+                <a asp-controller="Account" asp-action="Profile">
+                    <i class="fa fa-user"></i> Profile
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0">
+                    <button type="submit" class="btn" style="width:100%;justify-content:flex-start;background:none;color:var(--text-muted);padding:9px 12px;gap:10px;border-radius:8px;font-size:14px;">
+                        <i class="fa fa-right-from-bracket" style="width:16px;text-align:center;font-size:13px;"></i> Sign Out
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+}
+
+<div class="main">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="topbar">
+            <span class="topbar-title">@ViewData["Title"]</span>
+            <div class="topbar-actions">
+                @{
+                    var firstName = User.Identity?.Name?.Split('@')[0] ?? "U";
+                    var initials = firstName.Length > 0 ? firstName[0].ToString().ToUpper() : "U";
+                }
+                <a asp-controller="Account" asp-action="Profile" style="text-decoration:none">
+                    <div class="avatar">@initials</div>
+                </a>
+            </div>
+        </div>
+    }
+
+    <div class="page-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success"><i class="fa fa-check-circle"></i> @TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger"><i class="fa fa-circle-xmark"></i> @TempData["Error"]</div>
+        }
+
+        @RenderBody()
+    </div>
+</div>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
