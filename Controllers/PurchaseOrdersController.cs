@@ -15,11 +15,13 @@ namespace BuildFlow.Controllers
         private readonly IMaterialService _materials;
         private readonly IMaterialRequestService _requests;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly PurchaseOrderPdfService _pdf;
 
         public PurchaseOrdersController(
             IPurchaseOrderService orders, ISupplierService suppliers,
             ISiteService sites, IMaterialService materials,
-            IMaterialRequestService requests, UserManager<ApplicationUser> userManager)
+            IMaterialRequestService requests, UserManager<ApplicationUser> userManager,
+            PurchaseOrderPdfService pdf)
         {
             _orders = orders;
             _suppliers = suppliers;
@@ -27,6 +29,7 @@ namespace BuildFlow.Controllers
             _materials = materials;
             _requests = requests;
             _userManager = userManager;
+            _pdf = pdf;
         }
 
         [Authorize]
@@ -155,6 +158,17 @@ namespace BuildFlow.Controllers
                 TempData["Error"] = ex.Message;
             }
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [Authorize]
+        public async Task<IActionResult> DownloadPdf(int id)
+        {
+            var po = await _orders.GetByIdAsync(id);
+            if (po == null) return NotFound();
+
+            var pdfBytes = _pdf.Generate(po);
+            var fileName = $"PO_{po.OrderNumber.Replace("/", "-")}_{DateTime.Today:yyyyMMdd}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
         }
     }
 }

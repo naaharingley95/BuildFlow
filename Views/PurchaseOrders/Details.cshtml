@@ -25,6 +25,9 @@
                 <i class="fa fa-truck"></i> Schedule Delivery
             </a>
         }
+        <a asp-action="DownloadPdf" asp-route-id="@Model.Id" class="btn btn-secondary" target="_blank">
+            <i class="fa fa-file-pdf"></i> Download PDF
+        </a>
         @if (Model.Status == PurchaseOrderStatus.Draft || Model.Status == PurchaseOrderStatus.Issued)
         {
             <button class="btn btn-danger btn-sm" onclick="document.getElementById('cancel-section').style.display='block'">

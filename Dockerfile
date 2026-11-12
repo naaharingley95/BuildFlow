@@ -21,9 +21,11 @@ COPY --from=build /app/publish .
 
 # Environment
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
+# Railway injects $PORT dynamically; fall back to 8080 for local Docker runs
+ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
 ENV ConnectionStrings__SqliteConnection="Data Source=/app/data/buildflow.db"
 
-EXPOSE 8080
+EXPOSE ${PORT:-8080}
 
 ENTRYPOINT ["dotnet", "BuildFlow.dll"]
+

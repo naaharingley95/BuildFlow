@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     // SQLite for all environments — zero-install, persistent file on disk.
-    // On Azure: file is stored in /home/data/ (persistent storage mount).
+    // On Railway: file is stored in /app/data/ (persistent volume mount).
     var connStr = builder.Configuration.GetConnectionString("SqliteConnection")
                   ?? "Data Source=buildflow.db";
     options.UseSqlite(connStr);
@@ -60,6 +60,7 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IConsumptionService, ConsumptionService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<INumberGeneratorService, NumberGeneratorService>();
+builder.Services.AddScoped<PurchaseOrderPdfService>();
 
 var app = builder.Build();
 
@@ -74,7 +75,8 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
+// Railway terminates TLS at load balancer — disable HTTPS redirect to avoid redirect loops
+// app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
